@@ -2,61 +2,49 @@ package vue;
 
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
+import model.GridSoldier;
+import model.Troupe;
+
 @SuppressWarnings("serial")
 public class GamePanel extends JPanel
 {
-
-	Image imgFond, imgBullet, imgShip;
+	// ##############################################################################################
+    // 								ATTRIBUTS
+    // ##############################################################################################
 	
-	private boolean isBullet = false;
-	private int posXBullet;
-	private int posYBullet;
+	Image imgFond, imgShip, imgEnemies;
 	
-	private int posXShip;
+	private Troupe troupe;
+	private GridSoldier gs;
+	
+	BufferedImage[] bimgE = new BufferedImage[4];
 	
 	//##############################################################################################
 	//						CONSTRUCTEUR
 	//##############################################################################################*/
 	
-	public GamePanel() {
+	public GamePanel(Troupe troupe, GridSoldier gs) {
 		super();
-		
-		this.posXBullet = -50;
-		this.posYBullet = -50;
+		this.troupe = troupe;
+		this.gs = gs;
 
 		try {
 			imgFond = ImageIO.read(new File("img/fond_etoile.png"));
-			imgBullet = ImageIO.read(new File("img/shotUp.gif"));
-			imgShip = ImageIO.read(new File("img/ship.gif"));
+			imgShip = troupe.getImage();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
 	}
-	
-	//---------------------------------------------------------------------------------------------//
-	public GamePanel(int posXBullet, int posYBullet) {
-		super();
-		this.posXBullet = posXBullet;
-		this.posYBullet = posYBullet;
-		
-		try {
-			imgFond = ImageIO.read(new File("img/fond_etoile.png"));
-			imgBullet = ImageIO.read(new File("img/shotUp.gif"));
-			imgShip = ImageIO.read(new File("img/ship.gif"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	
-	
+
+
 	//##############################################################################################
 	//						PEINDRE LE PANNEAU
 	//##############################################################################################*/
@@ -64,83 +52,55 @@ public class GamePanel extends JPanel
 	/**
 	 * Methode issue de l'héritage de JPanel
 	 */
-
+	
 	public void paintComponent(Graphics g)
 	{
 		g.drawImage(imgFond, 0, 0, this.getWidth(), this.getHeight(),this);
-		g.drawImage(imgShip, posXShip, this.getHeight()-45, this);
-		if(isBullet)
-			g.drawImage(imgBullet, posXBullet, posYBullet, this);
-	}
-	
-	public void newBullet(int setPosXShip)
-	{
-		setPosXBullet(setPosXShip+11);
-		setPosYBullet(this.getHeight()-68);
-		Thread t = new Thread(new Runnable() 
-		{
-			public void run() 
-			{
-				isBullet = true;
-				while (posYBullet>-20) 
-				{	
-					setPosYBullet(posYBullet-3);
-					repaint();
-					try {
-						Thread.sleep(20);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-				isBullet = false;
-				repaint();
-			}
-		});
-		t.start();
-
+		for(Troupe t : gs.getAllTroupes())
+			g.drawImage(t.getImage(), t.getXLeft(), t.getYUp(), null);
+		
+		g.drawImage(imgShip, troupe.getXLeft(), troupe.getYUp(), this);
 	}
 
-	public synchronized boolean isBullet() {
-		return isBullet;
-	}
-
-	public synchronized int getPosXBullet() {
-		return posXBullet;
-	}
-
-	public synchronized int getPosYBullet() {
-		return posYBullet;
-	}
-
-	public synchronized int getPosXShip() {
-		return posXShip;
-	}
-
-	public synchronized void setBullet(boolean isBullet) {
-		this.isBullet = isBullet;
-	}
-
-	public synchronized void setPosXBullet(int posXBullet) {
-		this.posXBullet = posXBullet;
-	}
-
-	public synchronized void setPosYBullet(int posYBullet) {
-		this.posYBullet = posYBullet;
-	}
-
-	public synchronized void setPosXShip(int posXShip) {
-		this.posXShip = posXShip;
-	}
 	
 	//##############################################################################################
 	//						ACCESSEUR
 	//##############################################################################################*/
 
+	public Image getImgShip() {
+		return imgShip;
+	}
 
+	public Image getImgEnemies() {
+		return imgEnemies;
+	}
+
+	public Troupe getTroupe() {
+		return troupe;
+	}
+
+	public GridSoldier getGs() {
+		return gs;
+	}
+
+	
 	//##############################################################################################
 	//						MODIFICATEUR
 	//##############################################################################################*/
-	
 
+	public void setImgShip(Image imgShip) {
+		this.imgShip = imgShip;
+	}
 
+	public void setImgEnemies(Image imgEnemies) {
+		this.imgEnemies = imgEnemies;
+	}
+
+	public void setTroupe(Troupe troupe) {
+		this.troupe = troupe;
+	}
+
+	public void setGs(GridSoldier gs) {
+		this.gs = gs;
+	}
 }
