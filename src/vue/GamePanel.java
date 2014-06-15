@@ -5,6 +5,7 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
@@ -22,7 +23,7 @@ public class GamePanel extends JPanel
 	Image imgFond, imgShip, imgEnemies;
 	
 	private Troupe troupe;
-	private GridSoldier gs;
+	private ArrayList<GridSoldier> listeGrid;
 	
 	BufferedImage[] bimgE = new BufferedImage[4];
 	
@@ -30,10 +31,10 @@ public class GamePanel extends JPanel
 	//						CONSTRUCTEUR
 	//##############################################################################################*/
 	
-	public GamePanel(Troupe troupe, GridSoldier gs) {
+	public GamePanel(Troupe troupe, ArrayList<GridSoldier> lgs) {
 		super();
 		this.troupe = troupe;
-		this.gs = gs;
+		this.listeGrid = lgs;
 
 		try {
 			imgFond = ImageIO.read(new File("img/fond_etoile.png"));
@@ -56,8 +57,11 @@ public class GamePanel extends JPanel
 	public void paintComponent(Graphics g)
 	{
 		g.drawImage(imgFond, 0, 0, this.getWidth(), this.getHeight(),this);
-		for(Troupe t : gs.getAllTroupes())
-			g.drawImage(t.getImage(), t.getXLeft(), t.getYUp(), null);
+		for(GridSoldier gs : listeGrid)
+		{
+			for(Troupe t : gs.getAllTroupes())
+				g.drawImage(t.getImage(), t.getXLeft(), t.getYUp(), null);
+		}
 		
 		g.drawImage(imgShip, troupe.getXLeft(), troupe.getYUp(), this);
 	}
@@ -79,9 +83,6 @@ public class GamePanel extends JPanel
 		return troupe;
 	}
 
-	public GridSoldier getGs() {
-		return gs;
-	}
 
 	
 	//##############################################################################################
@@ -100,7 +101,8 @@ public class GamePanel extends JPanel
 		this.troupe = troupe;
 	}
 
-	public void setGs(GridSoldier gs) {
-		this.gs = gs;
+	public void setListeGrid(ArrayList<GridSoldier> listeGrid) {
+		this.listeGrid = listeGrid;
 	}
+
 }

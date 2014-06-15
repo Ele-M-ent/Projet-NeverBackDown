@@ -1,6 +1,5 @@
 package model;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
@@ -10,9 +9,7 @@ public class Soldat extends Troupe
 {
 	
 	public Soldat(int posX, int posY, Camps c) {
-		super();
-		this.posX = posX;
-		this.posY = posY;
+		super(posX, posY);
 		
 				//Gestion des images
 		try {

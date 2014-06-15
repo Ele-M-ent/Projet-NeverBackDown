@@ -7,8 +7,9 @@ import java.util.Iterator;
 
 import model.Troupe.Camps;
 
-public class GridSoldier 
+public class GridSoldier extends EntiteGraphique implements Cloneable
 {
+	
 	// ##############################################################################################
     // 								ATTRIBUTS
     // ##############################################################################################
@@ -16,8 +17,7 @@ public class GridSoldier
 	private Hashtable<Integer, ArrayList<Troupe>> colonne = new Hashtable<Integer, ArrayList<Troupe>>();
 	private ArrayList<Troupe> line = new ArrayList<Troupe>();
 	
-	private int posX, posY;
-	private int sizeX, sizeY;
+	private Troupe s;
 	
 	private int nbLine, nbColone;
 	
@@ -29,14 +29,13 @@ public class GridSoldier
 
 	public GridSoldier(int nbLine, int nbColone, int posX, int posY) 
 	{
-		super();
-		this.posX = posX;
-		this.posY = posY;
+		super(posX,posY);
+		
 		this.nbLine = nbLine;
 		this.nbColone = nbColone;
 		
 		line = new ArrayList<Troupe>();
-		Troupe s = new Soldat(posX, posY, Camps.ennemy);
+		s = new Soldat(posX, posY, Camps.ennemy);
 		
 		for(int i=0; i<nbColone; i++)
 		{
@@ -46,10 +45,77 @@ public class GridSoldier
 			line = new ArrayList<Troupe>();
 		}
 		
-		this.sizeX = s.getSizeX()*espacement*nbColone;
-		this.sizeY = s.getSizeY()*espacement*nbLine;
+		this.sizeY = (s.getSizeY()+espacement) * (nbLine-1) + s.getSizeY(); 
+		this.sizeX = (s.getSizeX()+espacement) * (nbColone-1) + s.getSizeX();
+		
+		this.setVitesse(5);
 	}
 
+	
+    // ##############################################################################################
+    //							     MOUVEMENT
+    // ##############################################################################################
+
+	public synchronized void upMove() 
+	{
+		Enumeration<ArrayList<Troupe>> e = colonne.elements();
+		while(e.hasMoreElements())
+		{
+			Iterator<Troupe> i = e.nextElement().iterator();
+			while(i.hasNext())
+			{
+				i.next().setPosY(i.next().getYUp() - vitesse );
+			}
+		}
+		this.sizeX = s.getSizeX() * espacement * nbColone;
+		this.sizeY = s.getSizeY() * espacement * nbLine;
+	}
+	
+	public synchronized void downMove() 
+	{
+		Enumeration<ArrayList<Troupe>> e = colonne.elements();
+		while(e.hasMoreElements())
+		{
+			Iterator<Troupe> i = e.nextElement().iterator();
+			while(i.hasNext())
+			{
+				i.next().downMove();
+			}
+		}
+
+		this.posY = this.posY + vitesse;
+	}
+
+	public synchronized void leftMove() 
+	{
+		Enumeration<ArrayList<Troupe>> e = colonne.elements();
+		while(e.hasMoreElements())
+		{
+			Iterator<Troupe> i = e.nextElement().iterator();
+			while(i.hasNext())
+			{
+				i.next().setPosX(i.next().getXLeft() - vitesse );
+			}
+		}
+		this.sizeX = s.getSizeX() * espacement * nbColone;
+		this.sizeY = s.getSizeY() * espacement * nbLine;
+	}
+
+	public synchronized void rightMove() 
+	{
+		Enumeration<ArrayList<Troupe>> e = colonne.elements();
+		while(e.hasMoreElements())
+		{
+			Iterator<Troupe> i = e.nextElement().iterator();
+			while(i.hasNext())
+			{
+				i.next().setPosX(i.next().getXLeft() + vitesse );
+			}
+		}
+		this.sizeX = s.getSizeX() * espacement * nbColone;
+		this.sizeY = s.getSizeY() * espacement * nbLine;
+	}
+		
 	
 	//##############################################################################################
 	//							COLISION AVEC ALLIE
@@ -63,8 +129,11 @@ public class GridSoldier
 			return false;
 		else
 		{
-			ArrayList<Troupe> lt = colonne.get( (t.getXLeft() - this.posX)/(sizeX/nbColone) );
+						//=================================================
+						//	  Verification colision sur Enemy à gauche
+						//=================================================
 			
+			ArrayList<Troupe> lt = colonne.get( (t.getXLeft() - this.posX)/(sizeX/nbColone) );
 			if(!lt.isEmpty())
 			{
 				if( lt.get(lt.size() -1).getXLeft() < t.getXLeft() && lt.get(lt.size() -1).getXRight() > t.getXLeft() ) 
@@ -78,14 +147,15 @@ public class GridSoldier
 				}
 			}
 			
-			lt = colonne.get( (t.getXRight() - this.posX)/(sizeX/nbColone) );
+			lt = colonne.get( (t.getXRight() - this.posX)/((sizeX+espacement)/nbColone) );
 			if(!lt.isEmpty())
 			{
-				if( lt.get(lt.size() -1).getXLeft() > t.getXRight() && lt.get(lt.size() -1).getXRight() < t.getXRight() ) 
+				if( lt.get(lt.size() -1).getXLeft() < t.getXRight() && lt.get(lt.size() -1).getXRight() > t.getXRight() ) 
 				{
 					if(t.getYUp() < lt.get(lt.size() -1).getYDown() + posY)
 					{
 							lt.remove(lt.size() -1);
+							controlGridSize();
 							return true;
 					}
 				}
@@ -94,36 +164,71 @@ public class GridSoldier
 		return false;
 	}
 	
-	
-	//##############################################################################################
-	//							REMOVE SOLDIER
-	//##############################################################################################*/
+    // ##############################################################################################
+    //						CONTROLE TAILLE GRILLE
+    // ##############################################################################################
 
-	public void removeSoldier(int l, int c)
+	private void controlGridSize()
 	{
-		this.colonne.get(c).remove(l);
+			//Control de la taille X
+		Enumeration<ArrayList<Troupe>> e = colonne.elements();
+		int widthMax = e.nextElement().size();
+		
+		while(e.hasMoreElements())
+		{
+			ArrayList<Troupe> a = e.nextElement();
+			if(a.size()>widthMax)
+				widthMax = a.size();
+		}
+		nbLine = widthMax;
+		
+		this.sizeY = (s.getSizeY()+espacement) * (nbColone-1) + s.getSizeY(); 
+		
+			//Control de la taille Y
+		nbColone = colonne.size();
+		this.sizeX = (s.getSizeX()+espacement) * (nbColone-1) + s.getSizeX();
 	}
 
+
+	//##############################################################################################
+	//						CONTROLEUR DE NULITE
+	//##############################################################################################*/
+
+	public boolean isEmpty(){
+		Enumeration<ArrayList<Troupe>> e = colonne.elements();
+		while(e.hasMoreElements())
+		{
+			if(!e.nextElement().isEmpty())
+				return false;
+		}
+		return true;
+	}
+	
+	
+	//##############################################################################################
+	//						Recuperer un clone de l'instance courante
+	//##############################################################################################*/
+
+	public Object clone() 
+	{      
+	    GridSoldier gs = null;
+	    
+		try {
+			gs = (GridSoldier) super.clone();
+			gs.colonne = (Hashtable<Integer, ArrayList<Troupe>>) colonne.clone();
+			gs.line = ((ArrayList<Troupe>) line.clone());
+		} 
+		catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+		
+	    return gs;
+  	}
+	
 	
 	//##############################################################################################
 	//						ACCESSEUR
 	//##############################################################################################*/
-
-	public int getPosX() {
-		return posX;
-	}
-
-	public int getPosY() {
-		return posY;
-	}
-
-	public int getSizeX() {
-		return sizeX;
-	}
-
-	public int getSizeY() {
-		return sizeY;
-	}
 
 	public ArrayList<Troupe> getAllTroupes()
 	{
@@ -136,26 +241,6 @@ public class GridSoldier
 		return troupes;
 	}
 
-	//##############################################################################################
-	//						MODIFICATEUR
-	//##############################################################################################*/
-	
-	public void setPosX(int posX) {
-		this.posX = posX;
-	}
-
-	public void setPosY(int posY) {
-		this.posY = posY;
-	}
-
-	public void setSizeX(int sizeX) {
-		this.sizeX = sizeX;
-	}
-
-	public void setSizeY(int sizeY) {
-		this.sizeY = sizeY;
-	}
-
 	public int getNbLine() {
 		return nbLine;
 	}
@@ -163,6 +248,11 @@ public class GridSoldier
 	public int getNbColone() {
 		return nbColone;
 	}
+	
+	
+	//##############################################################################################
+	//						DESCRIPTEUR
+	//##############################################################################################*/
 
 	public String toString() 
 	{
